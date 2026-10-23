@@ -1,0 +1,19 @@
+# Personal learning context — kept out of commits by default
+/devpost/learner-profile.md
+
+# Local credential files — never commit real secrets
+.env
+.env.*
+config.yaml
+
+# Allow a secret-free example file
+!.env.example
+
+# Go
+*.exe
+/test/
+/vendor/
+/macaco-infinito
+
+# OS
+.DS_Store
