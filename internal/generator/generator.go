@@ -10,10 +10,11 @@ import (
 // Mantém as últimas N letras em memória para consulta pelo servidor HTTP.
 type Gerador struct {
 	mu       sync.Mutex
-	letras   []rune // buffer circular das últimas letras
-	tamanho  int    // quantas letras manter (padrão: 10)
-	ativo    bool   // controla início/parada do loop
-	contador int    // total de letras geradas desde o início
+	letras   []rune    // buffer circular das últimas letras
+	tamanho  int       // quantas letras manter (padrão: 10)
+	ativo    bool      // controla início/parada do loop
+	contador int       // total de letras geradas desde o início
+	novos    chan rune // publica cada letra nova para os consumidores
 }
 
 // NovoGerador cria um gerador com o tamanho de buffer especificado.
@@ -21,7 +22,14 @@ func NovoGerador(tamanho int) *Gerador {
 	return &Gerador{
 		letras:  make([]rune, 0, tamanho),
 		tamanho: tamanho,
+		novos:   make(chan rune, 64),
 	}
+}
+
+// NovasLetras devolve o canal por onde cada letra gerada é publicada.
+// O matcher consome esse canal para acompanhar a sequência completa.
+func (g *Gerador) NovasLetras() <-chan rune {
+	return g.novos
 }
 
 // Iniciar começa a gerar letras continuamente em uma goroutine.
@@ -42,6 +50,11 @@ func (g *Gerador) Iniciar(intervalo time.Duration) {
 			letra := rune('A' + rand.Intn(26))
 			g.adicionarLetra(letra)
 			g.mu.Unlock()
+
+			// Publica a letra para o matcher. O canal é consumido pelo
+			// detector, então o gerador não fica bloqueado no uso normal.
+			g.novos <- letra
+
 			time.Sleep(intervalo)
 		}
 	}()

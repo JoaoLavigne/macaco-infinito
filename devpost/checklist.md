@@ -59,7 +59,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Learner check: Cadastre algo, pare o servidor, inicie novamente, confirme que seus dados estão lá.
   Commit: `Persistência em SQLite com tabelas cadastros e logs`
 
-- [ ] **6. Detector de match (buffer acumulativo, substring contígua, "ana" dentro de "banana")**
+- [x] **6. Detector de match (buffer acumulativo, substring contígua, "ana" dentro de "banana")**
   Becomes usable: Quando as letras geradas formam uma palavra cadastrada (mesmo dentro de outra maior), o sistema detecta o match.
   Why now: É o coração do teorema — detectar que o acaso formou algo significativo.
   PRD ref: `prd.md > Features and Behavior > Notificação por e-mail`

@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"macaco-infinito/internal/generator"
+	"macaco-infinito/internal/matcher"
 	"macaco-infinito/internal/store"
 )
 
@@ -47,6 +48,11 @@ func main() {
 	defer armazenamento.Fechar()
 
 	go gerador.Iniciar(500 * time.Millisecond)
+
+	detector := matcher.Novo(gerador.NovasLetras(), armazenamento, func(c store.Cadastro) {
+		log.Printf("MATCH: a palavra %s foi formada para %s", c.Palavra, c.Email)
+	})
+	detector.Iniciar()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
