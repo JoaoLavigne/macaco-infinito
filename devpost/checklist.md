@@ -39,7 +39,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Learner check: Observe as letras passando e confirme que são apenas A-Z sem acento/espaço.
   Commit: `Gerador de letras aleatórias contínuo`
 
-- [ ] **4. Cadastro de palavra+email com validações + notificação de sucesso**
+- [x] **4. Cadastro de palavra+email com validações + notificação de sucesso**
   Becomes usable: O usuário preenche palavra (3–15 letras) e email, envia, e recebe confirmação de sucesso com tempo médio de espera.
   Why now: É o ponto de entrada do usuário no experimento — sem cadastro, não há notificação futura.
   PRD ref: `prd.md > Features and Behavior > Cadastro de palavra e e-mail`
