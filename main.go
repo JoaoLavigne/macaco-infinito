@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"net/mail"
 	"os"
@@ -15,7 +14,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"macaco-infinito/internal/espera"
 	"macaco-infinito/internal/generator"
+	"macaco-infinito/internal/mailer"
 	"macaco-infinito/internal/matcher"
 	"macaco-infinito/internal/store"
 )
@@ -25,12 +26,18 @@ var indexHTML string
 
 var gerador = generator.NovoGerador(10)
 
-var temposEspera = calcularTemposEspera()
-
 type configuracao struct {
+	SMTP struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+		User string `yaml:"user"`
+		Pass string `yaml:"pass"`
+	} `yaml:"smtp"`
 	DB struct {
 		Path string `yaml:"path"`
 	} `yaml:"db"`
+	SiteURL    string `yaml:"site_url"`
+	AlertEmail string `yaml:"alert_email"`
 }
 
 type pedidoCadastro struct {
@@ -47,11 +54,17 @@ func main() {
 	}
 	defer armazenamento.Fechar()
 
+	enviador := mailer.Novo(mailer.Config{
+		Host:    config.SMTP.Host,
+		Port:    config.SMTP.Port,
+		User:    config.SMTP.User,
+		Pass:    config.SMTP.Pass,
+		SiteURL: config.SiteURL,
+	})
+
 	go gerador.Iniciar(500 * time.Millisecond)
 
-	detector := matcher.Novo(gerador.NovasLetras(), armazenamento, func(c store.Cadastro) {
-		log.Printf("MATCH: a palavra %s foi formada para %s", c.Palavra, c.Email)
-	})
+	detector := matcher.Novo(gerador.NovasLetras(), armazenamento, notificar(armazenamento, enviador))
 	detector.Iniciar()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -143,12 +156,41 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 
 		mensagem := fmt.Sprintf(
 			"Palavra cadastrada. Será notificado quando o macaco digitar sua palavra. Boa sorte! O tempo médio de espera é de %s.",
-			temposEspera[len(palavra)],
+			espera.Formatar(espera.Media(len(palavra))),
 		)
 
 		responderJSON(w, http.StatusOK, map[string]string{
 			"mensagem": mensagem,
 		})
+	}
+}
+
+// notificador é a parte do mailer que o fluxo de notificação precisa.
+type notificador interface {
+	EnviarNotificacao(destinatario, palavra string, cadastradoEm, agora time.Time) error
+}
+
+// notificar envia o e-mail PRIMEIRO e só marca o cadastro como notificado
+// se o SMTP confirmar o sucesso. Se o envio falhar, o cadastro continua
+// pendente para o matcher tentar de novo.
+func notificar(armazenamento *store.Store, enviador notificador) func(store.Cadastro) error {
+	return func(c store.Cadastro) error {
+		agora := time.Now()
+
+		if err := enviador.EnviarNotificacao(c.Email, c.Palavra, c.Data, agora); err != nil {
+			log.Printf("Erro ao enviar e-mail para %s: %v", c.Email, err)
+			registrarErro(armazenamento, "smtp", err.Error(), "mail")
+			return err
+		}
+
+		if err := armazenamento.AtualizarNotificado(c.ID, agora); err != nil {
+			log.Printf("E-mail enviado, mas erro ao atualizar cadastro %d: %v", c.ID, err)
+			registrarErro(armazenamento, "sql", err.Error(), "matcher")
+			return err
+		}
+
+		log.Printf("E-mail enviado para %s (palavra %s)", c.Email, c.Palavra)
+		return nil
 	}
 }
 
@@ -202,62 +244,10 @@ func emailValido(email string) bool {
 	return err == nil && endereco.Address == email
 }
 
-func calcularTemposEspera() map[int]string {
-	tempos := make(map[int]string, 13)
-	for tamanho := 3; tamanho <= 15; tamanho++ {
-		segundos := math.Pow(26, float64(tamanho)) / 2
-		tempos[tamanho] = formatarDuracao(segundos)
-	}
-	return tempos
-}
-
-func formatarDuracao(segundos float64) string {
-	const (
-		minuto = 60.0
-		hora   = 60 * minuto
-		dia    = 24 * hora
-		ano    = 365.25 * dia
-	)
-
-	switch {
-	case segundos < minuto:
-		return formatarNumero(segundos) + " segundos"
-	case segundos < hora:
-		return formatarNumero(segundos/minuto) + " minutos"
-	case segundos < dia:
-		return formatarNumero(segundos/hora) + " horas"
-	case segundos < ano:
-		return formatarNumero(segundos/dia) + " dias"
-	}
-
-	anos := segundos / ano
-	switch {
-	case anos < 1000:
-		return formatarNumero(anos) + " anos"
-	case anos < 1_000_000:
-		return formatarNumero(anos/1_000) + " mil anos"
-	case anos < 1_000_000_000:
-		return formatarNumero(anos/1_000_000) + " milhões de anos"
-	case anos < 1_000_000_000_000:
-		return formatarNumero(anos/1_000_000_000) + " bilhões de anos"
-	default:
-		return formatarNumero(anos/1_000_000_000_000) + " trilhões de anos"
-	}
-}
-
-func formatarNumero(valor float64) string {
-	var texto string
-	if valor < 10 {
-		texto = fmt.Sprintf("%.1f", valor)
-	} else {
-		texto = fmt.Sprintf("%.0f", valor)
-	}
-	return strings.Replace(texto, ".", ",", 1)
-}
-
 func carregarConfiguracao() configuracao {
 	var config configuracao
 	config.DB.Path = "dados.db"
+	config.SiteURL = "http://localhost:8080"
 
 	dados, err := os.ReadFile("config.yaml")
 	if err != nil {

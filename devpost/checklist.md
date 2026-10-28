@@ -69,14 +69,14 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Learner check: Rode `go test ./internal/matcher -run TestDetectaSubstringContigua -v` e confirme o PASS; o teste alimenta BANANA e mostra ANA sendo detectada dentro dela.
   Commit: `Detector de match por substring contígua`
 
-- [ ] **7. Envio de email via SMTP (antes de marcar como notificado)**
+- [x] **7. Envio de email via SMTP (antes de marcar como notificado)**
   Becomes usable: Quando o match é detectado, o usuário recebe o e-mail de notificação.
   Why now: A notificação por email é o kernel do projeto — sem ela, é só um gerador aleatório.
   PRD ref: `prd.md > Features and Behavior > Notificação por e-mail`
   Spec ref: `spec.md > Components > Enviador de E-mail`, `spec.md > Important Failure Modes` (crash entre match e envio)
   Build: Componente mailer que envia email via SMTP com título e corpo definidos no PRD. Tenta enviar PRIMEIRO, só marca como `notificado` no banco se o SMTP confirmar sucesso.
-  Verify (mechanical): Cadastre uma palavra curta (ex: "gato"), aguarde ou force match, confirme recebimento do email.
-  Learner check: Confirme que o email chega com o texto correto (título, corpo, link de volta).
+  Verify (mechanical): `go test ./...` comprova a entrega num servidor SMTP fake, a retentativa em caso de falha e a ordem envio→notificado.
+  Learner check: Rode `go test ./internal/mailer -run TestEnviarNotificacao -v` e confirme o PASS; com credenciais SMTP reais no config.yaml, cadastre uma palavra curta e confirme o e-mail com título, corpo e link.
   Commit: `Envio de notificação por email via SMTP`
 
 - [ ] **8. Health checks `/health` + monitoramento (offset, email pendente, disco, throughput)**
@@ -116,3 +116,4 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
 ## Revisions
 
 - Slice 6: o learner check original pedia esperar o acaso formar "sol" dentro de "solstício", o que levaria horas (≈2,4h só para uma palavra de 3 letras). Substituído por um teste controlado que alimenta a sequência BANANA e comprova a detecção de ANA dentro dela.
+- Slice 7: o spec não previa de onde viria o link do e-mail. Adicionado `site_url` ao `config.yaml` (padrão `http://localhost:8080`). Como não há credenciais SMTP reais no ambiente, a verificação usa um servidor SMTP fake local; o envio real fica para o deploy.

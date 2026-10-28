@@ -5,4 +5,5 @@ smtp:
   pass: "senha-de-aplicativo"
 db:
   path: "/var/lib/macaco-infinito/dados.db"
+site_url: "http://SEU-IP:8080"
 alert_email: "seu-email-pessoal@gmail.com"

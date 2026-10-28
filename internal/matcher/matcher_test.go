@@ -1,6 +1,7 @@
 package matcher
 
 import (
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -29,10 +30,11 @@ func TestDetectaSubstringContigua(t *testing.T) {
 	var mu sync.Mutex
 	var achados []string
 
-	detector := Novo(letras, armazenamento, func(c store.Cadastro) {
+	detector := Novo(letras, armazenamento, func(c store.Cadastro) error {
 		mu.Lock()
 		achados = append(achados, c.Palavra)
 		mu.Unlock()
+		return nil
 	})
 	detector.Iniciar()
 	defer close(letras)
@@ -72,5 +74,58 @@ func TestDetectaSubstringContigua(t *testing.T) {
 	defer mu.Unlock()
 	if len(achados) != 2 || achados[0] != "ANA" || achados[1] != "BANANA" {
 		t.Fatalf("detecções inesperadas: %v", achados)
+	}
+}
+
+// TestRetentaEnvioFalho garante que um match cujo envio falhou não é
+// marcado como detectado e é tentado de novo mais tarde.
+func TestRetentaEnvioFalho(t *testing.T) {
+	armazenamento, err := store.Abrir(t.TempDir() + "/teste.db")
+	if err != nil {
+		t.Fatalf("abrir banco: %v", err)
+	}
+	defer armazenamento.Fechar()
+
+	if err := armazenamento.InserirCadastro("ana@exemplo.com", "ANA", time.Now()); err != nil {
+		t.Fatalf("inserir ANA: %v", err)
+	}
+
+	letras := make(chan rune, 32)
+	var mu sync.Mutex
+	tentativas := 0
+	var notificados []string
+
+	detector := Novo(letras, armazenamento, func(c store.Cadastro) error {
+		mu.Lock()
+		defer mu.Unlock()
+		tentativas++
+		if tentativas == 1 {
+			return errors.New("smtp fora do ar")
+		}
+		notificados = append(notificados, c.Palavra)
+		return nil
+	})
+	detector.intervaloRetentativa = 10 * time.Millisecond
+	detector.Iniciar()
+	defer close(letras)
+
+	for _, letra := range "ANA" {
+		letras <- letra
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Letras extras fazem o matcher acordar e tentar de novo.
+	for i := 0; i < 10; i++ {
+		letras <- 'X'
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if tentativas < 2 {
+		t.Fatalf("esperava nova tentativa, houve %d", tentativas)
+	}
+	if len(notificados) != 1 || notificados[0] != "ANA" {
+		t.Fatalf("esperava ANA notificada uma vez, obteve %v", notificados)
 	}
 }
