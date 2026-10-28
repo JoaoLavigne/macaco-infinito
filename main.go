@@ -92,6 +92,7 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 
 		var pedido pedidoCadastro
 		if err := json.NewDecoder(r.Body).Decode(&pedido); err != nil {
+			registrarErro(armazenamento, "validacao_entrada", "corpo JSON inválido: "+err.Error(), "cadastro")
 			responderJSON(w, http.StatusBadRequest, map[string]string{
 				"erro": "Entrada inválida. Verifique a palavra e o e-mail.",
 			})
@@ -102,6 +103,7 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 		email := strings.ToLower(strings.TrimSpace(pedido.Email))
 
 		if len(palavra) < 3 || len(palavra) > 15 {
+			registrarErro(armazenamento, "validacao_entrada", "palavra fora do tamanho permitido", "cadastro")
 			responderJSON(w, http.StatusBadRequest, map[string]string{
 				"erro": "A palavra deve ter entre 3 e 15 letras.",
 			})
@@ -109,6 +111,7 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 		}
 
 		if !palavraAlfabetica(palavra) || !emailValido(email) {
+			registrarErro(armazenamento, "validacao_entrada", "palavra ou e-mail inválido", "cadastro")
 			responderJSON(w, http.StatusBadRequest, map[string]string{
 				"erro": "Entrada inválida. Verifique a palavra e o e-mail.",
 			})
@@ -117,6 +120,7 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 
 		err := armazenamento.InserirCadastro(email, palavra, time.Now())
 		if err == store.ErrEmailDuplicado {
+			registrarErro(armazenamento, "validacao_entrada", "e-mail já cadastrado", "cadastro")
 			responderJSON(w, http.StatusConflict, map[string]string{
 				"erro": "e-mail já cadastrado",
 			})
@@ -124,6 +128,7 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 		}
 		if err != nil {
 			log.Printf("Erro ao gravar cadastro: %v", err)
+			registrarErro(armazenamento, "sql", err.Error(), "cadastro")
 			responderJSON(w, http.StatusInternalServerError, map[string]string{
 				"erro": "Erro interno. Tente novamente mais tarde.",
 			})
@@ -138,6 +143,14 @@ func cadastrar(armazenamento *store.Store) http.HandlerFunc {
 		responderJSON(w, http.StatusOK, map[string]string{
 			"mensagem": mensagem,
 		})
+	}
+}
+
+// registrarErro grava um diagnóstico na tabela logs sem interromper o fluxo
+// principal. Se a gravação falhar, o erro é ignorado para evitar loop de falha.
+func registrarErro(armazenamento *store.Store, tipo, mensagem, origem string) {
+	if err := armazenamento.RegistrarLog(tipo, mensagem, origem); err != nil {
+		log.Printf("Erro ao gravar log: %v", err)
 	}
 }
 

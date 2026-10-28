@@ -49,7 +49,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Learner check: Preencha o formulário e confirme que a mensagem de sucesso aparece como esperado.
   Commit: `Cadastro de palavra e email com validações`
 
-- [ ] **5. Armazenamento SQLite (inserir, listar pendentes, tabela de logs)**
+- [x] **5. Armazenamento SQLite (inserir, listar pendentes, tabela de logs)**
   Becomes usable: Cadastros são salvos em arquivo SQLite no disco e persistem entre reinícios; erros são gravados na tabela de logs.
   Why now: Persistência é o primeiro lugar onde o modelo de dados pode estar errado — descobrir agora é barato.
   PRD ref: `prd.md > States and Boundaries > What persists between sessions`
