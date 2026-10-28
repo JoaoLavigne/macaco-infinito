@@ -1,6 +1,6 @@
 ---
 doc: checklist
-status: draft
+status: approved
 ---
 
 # Build Checklist
@@ -9,7 +9,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
 
 ## Slices
 
-- [ ] **1. Scaffold Go + dependências + config.yaml + main.go que compila e roda**
+- [x] **1. Scaffold Go + dependências + config.yaml + main.go que compila e roda**
   Becomes usable: Um projeto Go que compila, lê o config.yaml e sobe um servidor HTTP vazio na porta 8080.
   Why now: Prova que a base do binário único funciona antes de adicionar comportamento.
   PRD ref: `prd.md > What We're Building`
@@ -19,7 +19,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Learner check: Rode o binário localmente, acesse http://localhost:8080 e confirme que sobe sem erros.
   Commit: `Scaffold do projeto Go com servidor vazio`
 
-- [ ] **2. Servidor HTTP com página HTML (formulário, array de letras, botão do teorema)**
+- [x] **2. Servidor HTTP com página HTML (formulário, array de letras, botão do teorema)**
   Becomes usable: A página inicial renderiza no navegador com o formulário de cadastro, espaço para as letras e o botão "Conheça o Experimento do Macaco Infinito".
   Why now: Define a superfície de interação que todos os slices seguintes vão preencher.
   PRD ref: `prd.md > Screens and Layout`, `prd.md > Look and Feel`
@@ -29,7 +29,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Learner check: Abra o navegador, confirme que o formulário e o botão do teorema aparecem como imaginado.
   Commit: `Página inicial com formulário e botão do teorema`
 
-- [ ] **3. Gerador de letras (1 letra a cada 0,5s, últimas 10 na tela)**
+- [x] **3. Gerador de letras (1 letra a cada 0,5s, últimas 10 na tela)**
   Becomes usable: Letras aleatórias de A a Z aparecem na tela continuamente, atualizando a cada 0,5s.
   Why now: O núcleo do teorema do macaco infinito — sem letras, não há experimento.
   PRD ref: `prd.md > Features and Behavior > Geração de letras`

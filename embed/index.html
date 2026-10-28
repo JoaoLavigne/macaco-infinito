@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Macaco Infinito</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #050505;
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .stars {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1; background: radial-gradient(#0b0b0b, #000000);
+      overflow: hidden;
+    }
+    .star {
+      position: absolute; background: white; border-radius: 50%;
+      opacity: 0.8; animation: twinkle var(--duration) infinite alternate;
+    }
+    @keyframes twinkle {
+      from { opacity: 0.3; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.2); }
+    }
+    header { text-align: center; margin-bottom: 1rem; z-index: 1; }
+    .monkey { font-size: 4rem; display: inline-block; filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)); }
+    h1 { margin-top: 0.5rem; font-size: 1.5rem; letter-spacing: 2px; color: #a8a8a8; }
+    .letters-container {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; min-height: 2rem;
+      font-size: 1.2rem; letter-spacing: 0.5rem; font-family: 'Courier New', monospace;
+      color: #00ff00; text-align: center;
+    }
+    form {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;
+      display: flex; flex-direction: column; gap: 0.75rem; max-width: 400px; width: 90%;
+    }
+    input {
+      padding: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3); color: #e0e0e0; font-family: inherit; font-size: 1rem;
+    }
+    input:focus { outline: none; border-color: #00ff00; }
+    button[type="submit"] {
+      padding: 0.75rem; background: #00ff00; color: #000; border: none; border-radius: 4px;
+      font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer;
+    }
+    button[type="submit"]:hover { background: #33ff33; }
+    #teorema-btn {
+      padding: 0.75rem 1.5rem; background: transparent; color: #a8a8a8;
+      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px;
+      font-family: inherit; font-size: 0.9rem; cursor: pointer; margin-bottom: 1rem;
+    }
+    #teorema-btn:hover { border-color: #00ff00; color: #00ff00; }
+    #msg-sucesso {
+      margin-top: 1rem; padding: 1rem; background: rgba(0, 255, 0, 0.1);
+      border: 1px solid #00ff00; border-radius: 4px; color: #00ff00; font-size: 0.9rem; display: none;
+    }
+    #msg-erro {
+      margin-top: 1rem; padding: 1rem; background: rgba(255, 0, 0, 0.1);
+      border: 1px solid #ff4444; border-radius: 4px; color: #ff4444; font-size: 0.9rem; display: none;
+    }
+    #modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9); z-index: 100; display: none;
+      align-items: center; justify-content: center; padding: 2rem;
+    }
+    #modal-conteudo {
+      background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+      padding: 2rem; max-width: 600px; max-height: 80vh; overflow-y: auto;
+    }
+    #modal h2 { margin-bottom: 1rem; color: #00ff00; }
+    #modal p { margin-bottom: 1rem; line-height: 1.6; color: #e0e0e0; }
+    #modal button {
+      padding: 0.75rem 1.5rem; background: #00ff00; color: #000; border: none;
+      border-radius: 4px; font-family: inherit; font-weight: bold; cursor: pointer;
+    }
+    #modal button:hover { background: #33ff33; }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+
+  <header>
+    <div class="monkey">🐵😎</div>
+    <h1>Macaco Infinito</h1>
+  </header>
+
+  <div class="letters-container" id="letters-container">
+    <span id="letters">- - - - - - - - - -</span>
+  </div>
+
+  <form id="form-cadastro">
+    <input type="text" id="palavra" placeholder="Insira uma palavra (3–15 letras)" maxlength="15" required>
+    <input type="email" id="email" placeholder="Seu e-mail para notificação" required>
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <div id="msg-sucesso"></div>
+  <div id="msg-erro"></div>
+
+  <button id="teorema-btn">Conheça o Experimento do Macaco Infinito</button>
+
+  <div id="modal">
+    <div id="modal-conteudo">
+      <h2>O Teorema do Macaco Infinito</h2>
+      <p>O teorema do macaco infinito diz que, se um macaco apertasse teclas ao acaso por um tempo infinito, ele acabaria digitando qualquer texto que você imaginar, inclusive as obras completas de Shakespeare.</p>
+      <p>Por que isso é verdade? Qualquer sequência específica de letras tem uma chance pequena, mas não nula, de sair. Se você tenta infinitas vezes, uma chance pequena acaba acontecendo. É como jogar um dado: tirar seis é improvável numa jogada, mas se você joga sem parar, o seis aparece.</p>
+      <p>O experimento tem o objetivo de mostrar na prática que quando falamos de infinito não existe "se vai acontecer" mas sim "quando".</p>
+      <p>Cadastre o seu email e palavra e um dia a mágica vai acontecer.</p>
+      <button onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
+
+  <script>
+    const btnTeorema = document.getElementById('teorema-btn');
+    const modal = document.getElementById('modal');
+    const msgSucesso = document.getElementById('msg-sucesso');
+    const msgErro = document.getElementById('msg-erro');
+    const form = document.getElementById('form-cadastro');
+
+    function gerarEstrelas() {
+      const container = document.getElementById('stars');
+      const numEstrelas = 100;
+      for (let i = 0; i < numEstrelas; i++) {
+        const estrela = document.createElement('div');
+        estrela.className = 'star';
+        estrela.style.left = Math.random() * 100 + '%';
+        estrela.style.top = Math.random() * 100 + '%';
+        estrela.style.width = Math.random() * 3 + 'px';
+        estrela.style.height = estrela.style.width;
+        estrela.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        estrela.style.animationDelay = Math.random() * 2 + 's';
+        container.appendChild(estrela);
+      }
+    }
+
+    btnTeorema.addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+
+    window.fecharModal = function() {
+      modal.style.display = 'none';
+    };
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) fecharModal();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msgSucesso.style.display = 'none';
+      msgErro.style.display = 'none';
+
+      const palavra = document.getElementById('palavra').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      try {
+        const resposta = await fetch('/cadastro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ palavra, email })
+        });
+
+        const dados = await resposta.json();
+
+        if (resposta.ok) {
+          msgSucesso.textContent = dados.mensagem || 'Cadastro realizado com sucesso!';
+          msgSucesso.style.display = 'block';
+          form.reset();
+        } else {
+          msgErro.textContent = dados.erro || 'Erro ao cadastrar. Tente novamente.';
+          msgErro.style.display = 'block';
+        }
+      } catch (erro) {
+        msgErro.textContent = 'Erro de conexão. Tente novamente.';
+        msgErro.style.display = 'block';
+      }
+    });
+
+    const lettersEl = document.getElementById('letters');
+    let pollingAtivo = true;
+
+    async function atualizarLetras() {
+      if (!pollingAtivo) return;
+
+      try {
+        const resposta = await fetch('/letras', { cache: 'no-store' });
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          if (Array.isArray(dados.letras) && dados.letras.length > 0) {
+            lettersEl.textContent = dados.letras.join(' ');
+          }
+        }
+      } catch (erro) {
+        // Servidor momentaneamente indisponível: tenta de novo no próximo ciclo.
+      }
+
+      setTimeout(atualizarLetras, 500);
+    }
+
+    atualizarLetras();
+    gerarEstrelas();
+  </script>
+</body>
+</html>
