@@ -66,7 +66,7 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
   Spec ref: `spec.md > Components > Detector de Match`, `spec.md > Important Failure Modes` (match dividido entre letras)
   Build: Goroutine que mantém buffer das últimas 15 letras, a cada nova letra verifica se alguma palavra pendente aparece como substring contígua no buffer.
   Verify (mechanical): Cadastre "ana", deixe o gerador rodar até aparecer "ana" (mesmo dentro de outra sequência), confirme detecção.
-  Learner check: Cadastre "sol" e deixe rodar até aparecer dentro de "solstício" — confirme que dispara.
+  Learner check: Rode `go test ./internal/matcher -run TestDetectaSubstringContigua -v` e confirme o PASS; o teste alimenta BANANA e mostra ANA sendo detectada dentro dela.
   Commit: `Detector de match por substring contígua`
 
 - [ ] **7. Envio de email via SMTP (antes de marcar como notificado)**
@@ -115,4 +115,4 @@ Build mode: learn — cada slice é explicado em detalhe (funções, lógica, ar
 
 ## Revisions
 
-<!-- Leave this section empty when you write the checklist. `5-build` appends a bullet here when implementation contradicts an assumption in the plan. -->
+- Slice 6: o learner check original pedia esperar o acaso formar "sol" dentro de "solstício", o que levaria horas (≈2,4h só para uma palavra de 3 letras). Substituído por um teste controlado que alimenta a sequência BANANA e comprova a detecção de ANA dentro dela.
